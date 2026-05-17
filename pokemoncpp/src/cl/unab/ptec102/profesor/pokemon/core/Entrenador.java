@@ -5,9 +5,11 @@ import java.util.Random;
 
 public class Entrenador {
 
+    private String nombre;
     private ArrayList<Pokemon> pokemones;
 
-    public Entrenador() {
+    public Entrenador(String nombre) {
+        this.nombre = nombre;
         this.pokemones = new ArrayList<>();
     }
 

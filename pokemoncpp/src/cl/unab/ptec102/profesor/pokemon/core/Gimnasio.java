@@ -1,35 +1,84 @@
 package cl.unab.ptec102.profesor.pokemon.core;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 
 public class Gimnasio {
-    private ArrayList<Entrenador> entrenadores;
-    private ArrayList<Pokemon> pokemons;
 
-    public Gimnasio(){
-        Entrenador entrenadorPorDefecto = new Entrenador();
-        this.entrenadores = new ArrayList<>();
-        this.entrenadores.add(entrenadorPorDefecto);
-        this.pokemons = new ArrayList<>();
-    }
-    public void agregarPokemon(String Nombre, int id, int hp){
-        Pokemon nuevoPokemon = new Pokemon(id, Nombre, hp);
-        this.pokemons.add(nuevoPokemon);
+    private ArrayList<Pokemon> registroPokemones;
 
+    public Gimnasio() {
+        this.registroPokemones = new ArrayList<>();
+        this.cargarRegistro();
     }
 
-    public String getListaPokemons(){
-        String listaPokemons = "";
-        for(Pokemon pokemon : this.pokemons){
-            listaPokemons += "Nombre: " + pokemon.getNombre() + " - Id:  " + pokemon.getId() + " - HP: " + pokemon.getHp() + "\n";
+    public void cargarRegistro(){
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("pokemones.csv"));
+
+            String linea = reader.readLine();
+            while (linea != null) {
+                String[] datos = linea.split(",");
+                this.agregarPokemon(Integer.parseInt(datos[1]),datos[0],Integer.parseInt(datos[2]),false);
+                linea = reader.readLine();
+            }
+            reader.close();
+        } catch (Exception e) {
+            IO.println("Archivo no encontrado");
         }
-        return listaPokemons;
+
     }
 
-    Entrenador getEntrenadorPorDefecto(){
-        if(!this.entrenadores.isEmpty())
-            return this.entrenadores.getFirst();
-        else
-            return null;
+    public void guardarRegistro() {
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("pokemones.csv"));
+            String linea = "";
+            for(Pokemon p:this.registroPokemones){
+                linea = p.getNombre() + "," + p.getId() + "," + p.getHp() + "\n";
+                writer.write(linea);
+            }
+            writer.close();
+
+
+        } catch (Exception e) {
+            IO.println("Archivo no encontrado");
+        }
+    }
+
+    public void agregarPokemon(int id, String nombre, int hp, boolean guardarRegistro){
+        Pokemon nuevo = new Pokemon(id,nombre,hp);
+        this.registroPokemones.add(nuevo);
+        if(guardarRegistro){
+            this.guardarRegistro();
+        }
+    }
+
+    public String getListaPokemonesString(){
+        String lista = "";
+
+        for(Pokemon p:this.registroPokemones){
+            lista += "Id: " + p.getId() + " - Nombre: " + p.getNombre() + " - HP: " + p.getHp() + "\n";
+        }
+        return lista;
+    }
+
+    public void comenzarBatalla(){
+
+        PokemonAgua p1 = new PokemonAgua(2,"Pikachu",150);
+        PokemonTierra p2 = new PokemonTierra(3,"Charizard",300);
+
+        Entrenador e1 = new Entrenador("Ash");
+        e1.agregarPokemon(p1);
+        e1.agregarPokemon(p2);
+
+        PokemonTierra pobre = new PokemonTierra(8,"Charmander",100);
+
+        e1.ataqueMasivo(pobre);
+
     }
 }

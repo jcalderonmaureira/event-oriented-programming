@@ -22,12 +22,17 @@ public class VentanaPokemon {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+        this.taListaPokemones.setText(this.elGimnasio.getListaPokemonesString());
         btCrearPokemon.addActionListener(e->{
-            String nombre = tfNombre.getText();
-            int id = Integer.parseInt(tfId.getText());
-            int hp = Integer.parseInt(tfHp.getText());
-            this.elGimnasio.agregarPokemon(nombre, id, hp);
-            this.taListaPokemones.setText(this.elGimnasio.getListaPokemons());
+            btCrearPokemonListener();
         });
+    }
+
+    public void btCrearPokemonListener(){
+        String nombre = tfNombre.getText();
+        int id = Integer.parseInt(tfId.getText());
+        int hp = Integer.parseInt(tfHp.getText());
+        this.elGimnasio.agregarPokemon(id, nombre, hp, true);
+        this.taListaPokemones.setText(this.elGimnasio.getListaPokemonesString());
     }
 }

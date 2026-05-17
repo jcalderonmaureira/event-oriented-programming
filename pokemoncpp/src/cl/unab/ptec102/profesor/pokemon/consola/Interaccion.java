@@ -8,7 +8,7 @@ public class Interaccion {
         PokemonTierra p2 = new PokemonTierra(2, "Pikachu", 100);
         PokemonTierra p3 = new PokemonTierra(3, "Charmander", 100);
 
-        Entrenador ash = new Entrenador();
+        Entrenador ash = new Entrenador("Ash");
         ash.agregarPokemon(p1);
         ash.agregarPokemon(p2);
 
