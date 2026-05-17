@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQLite en IntelliJ IDEA 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap');
+  :root {
+    --bg:#0d1117;--surface:#161b22;--surface2:#1c2333;--border:#30363d;
+    --accent:#f78166;--accent2:#79c0ff;--accent3:#56d364;--accent4:#d2a8ff;
+    --text:#e6edf3;--text-muted:#8b949e;--warning:#e3b341;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  .header{background:linear-gradient(135deg,#1a1f35 0%,#0d1117 60%);border-bottom:1px solid var(--border);padding:28px 32px 24px;position:relative;overflow:hidden;}
+  .header::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(121,192,255,.12) 0%,transparent 70%);border-radius:50%;}
+  .badge{display:inline-block;background:rgba(247,129,102,.15);border:1px solid rgba(247,129,102,.35);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border-radius:4px;margin-bottom:12px;}
+  h1{font-size:clamp(22px,4vw,32px);font-weight:800;line-height:1.15;margin-bottom:6px;}
+  h1 span{color:var(--accent2);}
+  .subtitle{color:var(--text-muted);font-size:14px;}
+  .nav{display:flex;gap:4px;padding:12px 32px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+  .nav::-webkit-scrollbar{display:none;}
+  .nav-btn{flex-shrink:0;background:none;border:1px solid transparent;color:var(--text-muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+  .nav-btn:hover{color:var(--text);border-color:var(--border);}
+  .nav-btn.active{background:rgba(121,192,255,.1);border-color:rgba(121,192,255,.35);color:var(--accent2);}
+  .content{padding:28px 32px;max-width:900px;}
+  .section{display:none;} .section.active{display:block;}
+  .step-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden;transition:border-color .2s;}
+  .step-card:hover{border-color:var(--accent2);}
+  .step-header{display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;user-select:none;}
+  .step-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;flex-shrink:0;}
+  .blue{background:rgba(121,192,255,.15);color:var(--accent2);}
+  .green{background:rgba(86,211,100,.15);color:var(--accent3);}
+  .purple{background:rgba(210,168,255,.15);color:var(--accent4);}
+  .orange{background:rgba(247,129,102,.15);color:var(--accent);}
+  .yellow{background:rgba(227,179,65,.15);color:var(--warning);}
+  .step-title{font-size:15px;font-weight:600;flex:1;}
+  .step-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.8px;}
+  .tag-r{background:rgba(247,129,102,.15);color:var(--accent);}
+  .tag-o{background:rgba(139,148,158,.15);color:var(--text-muted);}
+  .chevron{color:var(--text-muted);font-size:12px;transition:transform .25s;}
+  .step-card.open .chevron{transform:rotate(90deg);}
+  .step-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border);}
+  .step-card.open .step-body{display:block;}
+  .step-desc{color:var(--text-muted);font-size:13px;line-height:1.7;padding:14px 0 10px;}
+  .kbd-row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;align-items:center;}
+  kbd{background:var(--surface2);border:1px solid var(--border);border-bottom:2px solid var(--border);color:var(--accent2);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:4px 10px;border-radius:5px;}
+  .sep{color:var(--text-muted);font-size:12px;}
+  .code-block{background:#0a0e16;border:1px solid var(--border);border-radius:8px;padding:16px;margin:10px 0;position:relative;overflow-x:auto;}
+  .code-block pre{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:var(--text);white-space:pre;}
+  .code-label{position:absolute;top:8px;right:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
+  .copy-btn{position:absolute;top:8px;right:48px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;transition:all .2s;}
+  .copy-btn:hover{background:rgba(121,192,255,.1);color:var(--accent2);border-color:var(--accent2);}
+  .ck{color:#ff7b72;} .cf{color:#d2a8ff;} .cs{color:#a5d6ff;} .cn{color:#79c0ff;} .cc{color:#8b949e;} .ct{color:#ffa657;} .cv{color:#56d364;}
+  .tip-box{background:rgba(86,211,100,.06);border:1px solid rgba(86,211,100,.25);border-left:3px solid var(--accent3);border-radius:6px;padding:12px 14px;margin:10px 0;font-size:13px;color:var(--text-muted);line-height:1.6;}
+  .warn-box{background:rgba(227,179,65,.06);border:1px solid rgba(227,179,65,.25);border-left:3px solid var(--warning);border-radius:6px;padding:12px 14px;margin:10px 0;font-size:13px;color:var(--text-muted);line-height:1.6;}
+  .info-box{background:rgba(121,192,255,.06);border:1px solid rgba(121,192,255,.2);border-left:3px solid var(--accent2);border-radius:6px;padding:12px 14px;margin:10px 0;font-size:13px;color:var(--text-muted);line-height:1.6;}
+  .hl{color:var(--text);font-weight:600;}
+  .path{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent4);background:rgba(210,168,255,.08);padding:2px 7px;border-radius:4px;}
+  .flow-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:13px;}
+  .flow-item{background:var(--surface2);border:1px solid var(--border);padding:6px 12px;border-radius:6px;color:var(--text);font-weight:600;font-size:12px;}
+  .flow-arrow{color:var(--accent2);font-size:16px;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid;}
+  .pb{border-color:rgba(121,192,255,.3);color:var(--accent2);background:rgba(121,192,255,.08);}
+  .pg{border-color:rgba(86,211,100,.3);color:var(--accent3);background:rgba(86,211,100,.08);}
+  .pp{border-color:rgba(210,168,255,.3);color:var(--accent4);background:rgba(210,168,255,.08);}
+  .sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+  .sql-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12px;margin:10px 0;}
+  .sql-table th{background:rgba(121,192,255,.08);color:var(--accent2);text-align:left;padding:8px 12px;border:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.8px;}
+  .sql-table td{padding:7px 12px;border:1px solid var(--border);color:var(--text-muted);}
+  .sql-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="badge">Tutorial · IntelliJ IDEA 2026</div>
+  <h1>SQLite en <span>IntelliJ IDEA</span></h1>
+  <div class="subtitle">Guía completa: configuración, dependencias, CRUD con Java y herramientas SQL</div>
+</div>
+<div class="nav">
+  <button class="nav-btn active" onclick="show('setup',this)">1. Configuración</button>
+  <button class="nav-btn" onclick="show('createdb',this)">2. Crear archivo .db</button>
+  <button class="nav-btn" onclick="show('deps',this)">3. Dependencias</button>
+  <button class="nav-btn" onclick="show('code',this)">4. Código Java</button>
+  <button class="nav-btn" onclick="show('sql',this)">5. SQL en IDE</button>
+  <button class="nav-btn" onclick="show('patterns',this)">6. Buenas Prácticas</button>
+</div>
+<div class="content">
+
+<!-- SETUP -->
+<div class="section active" id="sec-setup">
+  <div class="sec-title">Configuración inicial</div>
+
+  <div class="step-card open" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num blue">1</div>
+      <div class="step-title">Verificar plugin Database Tools &amp; SQL</div>
+      <span class="step-tag tag-r">Requerido</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">IntelliJ IDEA Ultimate incluye el plugin <span class="hl">Database Tools and SQL</span> preinstalado. Verifica que esté activo:</p>
+      <div class="kbd-row">
+        <kbd>Ctrl</kbd><span class="sep">+</span><kbd>Alt</kbd><span class="sep">+</span><kbd>S</kbd>
+        <span class="sep" style="margin-left:6px">→</span>
+        <span style="font-size:13px;color:var(--text-muted)">Plugins → Installed → "Database Tools and SQL" ✓</span>
+      </div>
+      <div class="warn-box">⚠️ <span class="hl">Community Edition:</span> no incluye soporte nativo de base de datos visual. Usa la dependencia JDBC manualmente (ver sección 2).</div>
+      <div class="tip-box">✅ IntelliJ IDEA <span class="hl">2026 (v26)</span> descarga automáticamente los drivers JDBC de SQLite al crear el data source.</div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num blue">2</div>
+      <div class="step-title">Crear el archivo de base de datos</div>
+      <span class="step-tag tag-r">Requerido</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">SQLite no necesita servidor. El archivo <span class="hl">.db</span> o <span class="hl">.sqlite</span> es la base de datos completa. Dos opciones:</p>
+      <div class="flow-row"><div class="flow-item">📁 Opción A: Arrastra y suelta un .db al Database Tool Window</div></div>
+      <div class="flow-row"><div class="flow-item">🛠️ Opción B: Se crea automáticamente al conectar por primera vez vía JDBC</div></div>
+      <div class="info-box">📌 Ubica el archivo en <span class="path">data/myapp.db</span> en la raíz del proyecto. Agrega <span class="path">*.db</span> al <span class="path">.gitignore</span> si contiene datos sensibles.</div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num blue">3</div>
+      <div class="step-title">Conectar SQLite al Database Tool Window</div>
+      <span class="step-tag tag-r">Requerido</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="flow-row">
+        <div class="flow-item">View</div><span class="flow-arrow">→</span>
+        <div class="flow-item">Tool Windows</div><span class="flow-arrow">→</span>
+        <div class="flow-item">Database</div><span class="flow-arrow">→</span>
+        <div class="flow-item">+ → Data Source → SQLite</div>
+      </div>
+      <table class="sql-table">
+        <tr><th>Campo</th><th>Valor</th></tr>
+        <tr><td>Name</td><td>mi-proyecto-db</td></tr>
+        <tr><td>File</td><td>data/myapp.db</td></tr>
+        <tr><td>Driver</td><td>SQLite (se descarga automáticamente)</td></tr>
+        <tr><td>URL JDBC</td><td>jdbc:sqlite:data/myapp.db</td></tr>
+      </table>
+      <div class="tip-box">💡 Haz click en <span class="hl">Test Connection</span> y luego en <span class="hl">Download missing driver files</span> si aparece ese enlace.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CREAR ARCHIVO DB -->
+<div class="section" id="sec-createdb">
+  <div class="sec-title">Cómo crear el archivo .db de SQLite</div>
+
+  <div class="tip-box" style="margin-bottom:16px">💡 SQLite no necesita instalación de servidor. El archivo <span class="hl">.db</span> <em>es</em> la base de datos completa. Elige la opción que mejor se adapte a tu flujo de trabajo.</div>
+
+  <div class="step-card open" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num green">⭐</div>
+      <div class="step-title">Opción 1 — Automático al ejecutar el código (recomendado)</div>
+      <span class="step-tag tag-r">Más fácil</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">JDBC crea el archivo <span class="hl">.db</span> automáticamente la primera vez que te conectas, si no existe. Solo necesitas crear la carpeta <span class="path">data/</span> manualmente:</p>
+      <div class="flow-row">
+        <div class="flow-item">Click derecho en el proyecto</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-item">New → Directory</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-item">Escribe: <code style="color:var(--accent2)">data</code></div>
+      </div>
+      <p class="step-desc" style="padding-top:4px">Luego, al ejecutar tu <span class="hl">Main.java</span> con esta línea, el archivo se crea solo:</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">JAVA</span>
+        <pre><span class="cc">// Crea data/myapp.db automáticamente si no existe</span>
+<span class="ct">Connection</span> conn = <span class="ct">DriverManager</span>.<span class="cf">getConnection</span>(
+    <span class="cs">"jdbc:sqlite:data/myapp.db"</span>
+);</pre>
+      </div>
+      <div class="tip-box">✅ Esta es la opción más recomendable para proyectos nuevos. El proceso queda reproducible para cualquier desarrollador que clone el repositorio.</div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num blue">2</div>
+      <div class="step-title">Opción 2 — Desde el Database Tool Window (Ultimate)</div>
+      <span class="step-tag tag-o">Visual</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">IntelliJ IDEA Ultimate puede crear el archivo directamente desde la interfaz:</p>
+      <div class="flow-row">
+        <div class="flow-item">View → Tool Windows → Database</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-item">+ → Data Source → SQLite</div>
+      </div>
+      <p class="step-desc" style="padding-top:4px">En el campo <span class="hl">File</span>, escribe la ruta del archivo nuevo:</p>
+      <div class="code-block">
+        <span class="code-label">RUTA</span>
+        <pre><span class="cv">data/myapp.db</span>   <span class="cc">← escríbela directamente, IntelliJ la crea</span></pre>
+      </div>
+      <p class="step-desc" style="padding-top:0">Haz click en <span class="hl">OK</span> → IntelliJ crea el archivo y descarga los drivers JDBC automáticamente.</p>
+      <div class="info-box">ℹ️ También puedes <span class="hl">arrastrar y soltar</span> un archivo <span class="path">.db</span> existente directamente al panel Database para conectarlo al instante.</div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num purple">3</div>
+      <div class="step-title">Opción 3 — Desde la Terminal integrada</div>
+      <span class="step-tag tag-o">Manual</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Abre la terminal de IntelliJ con <kbd>Alt</kbd>+<kbd>F12</kbd> y ejecuta según tu sistema:</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">LINUX / MAC</span>
+        <pre><span class="cc"># Crea la carpeta y el archivo vacío</span>
+<span class="cv">mkdir -p data && touch data/myapp.db</span></pre>
+      </div>
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">WINDOWS (PowerShell)</span>
+        <pre><span class="cv">New-Item -ItemType Directory -Force data</span>
+<span class="cv">New-Item -ItemType File data\myapp.db</span></pre>
+      </div>
+      <div class="warn-box">⚠️ Un archivo creado con <code>touch</code> está vacío (0 bytes). SQLite lo inicializará correctamente la primera vez que tu código escriba datos en él.</div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num orange">4</div>
+      <div class="step-title">Opción 4 — Con el cliente sqlite3 en terminal</div>
+      <span class="step-tag tag-o">Avanzado</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Si tienes <span class="hl">sqlite3</span> instalado en tu sistema, puedes crear y poblar la base de datos directamente:</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">SHELL</span>
+        <pre><span class="cc"># Abre (o crea) el archivo y lanza el CLI de SQLite</span>
+sqlite3 data/myapp.db
+
+<span class="cc"># Dentro del CLI, crea una tabla de prueba:</span>
+<span class="ck">CREATE TABLE</span> usuarios (
+    id     <span class="ct">INTEGER PRIMARY KEY AUTOINCREMENT</span>,
+    nombre <span class="ct">TEXT NOT NULL</span>
+);
+
+<span class="cc"># Verifica que se creó:</span>
+.tables
+
+<span class="cc"># Salir</span>
+.quit</pre>
+      </div>
+      <div class="tip-box">💡 Instalar sqlite3: <span class="hl">macOS</span> → <code>brew install sqlite</code> | <span class="hl">Ubuntu</span> → <code>sudo apt install sqlite3</code> | <span class="hl">Windows</span> → descarga desde sqlite.org/download</div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num yellow">📋</div>
+      <div class="step-title">Estructura final esperada en el proyecto</div>
+      <span class="step-tag tag-o">Referencia</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <span class="code-label">ÁRBOL</span>
+        <pre><span class="cv">mi-proyecto/</span>
+├── <span class="cf">data/</span>
+│   └── <span class="cs">myapp.db</span>      <span class="cc">← archivo SQLite (creado por cualquier opción)</span>
+├── <span class="cf">src/</span>
+│   └── <span class="cf">main/java/</span>
+│       └── <span class="ct">Main.java</span>
+├── <span class="cf">pom.xml</span>
+└── <span class="cs">.gitignore</span>      <span class="cc">← agregar: data/*.db</span></pre>
+      </div>
+      <div class="warn-box">⚠️ Agrega <span class="path">data/*.db</span> a tu <span class="path">.gitignore</span> para no versionar datos locales o sensibles en Git.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DEPENDENCIAS -->
+<div class="section" id="sec-deps">
+  <div class="sec-title">Dependencias del proyecto</div>
+
+  <div class="step-card open" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num green">A</div>
+      <div class="step-title">Maven — pom.xml</div>
+      <span class="step-tag tag-r">Recomendado</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">XML</span>
+        <pre><span class="cc">&lt;!-- pom.xml --&gt;</span>
+<span class="ck">&lt;dependency&gt;</span>
+    <span class="cf">&lt;groupId&gt;</span><span class="cs">org.xerial</span><span class="cf">&lt;/groupId&gt;</span>
+    <span class="cf">&lt;artifactId&gt;</span><span class="cs">sqlite-jdbc</span><span class="cf">&lt;/artifactId&gt;</span>
+    <span class="cf">&lt;version&gt;</span><span class="cn">3.47.1.0</span><span class="cf">&lt;/version&gt;</span>
+<span class="ck">&lt;/dependency&gt;</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num green">B</div>
+      <div class="step-title">Gradle (Kotlin DSL) — build.gradle.kts</div>
+      <span class="step-tag tag-o">Alternativa</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">KTS</span>
+        <pre><span class="cc">// build.gradle.kts</span>
+<span class="cf">dependencies</span> {
+    <span class="cf">implementation</span>(<span class="cs">"org.xerial:sqlite-jdbc:3.47.1.0"</span>)
+}</pre>
+      </div>
+      <div class="info-box">ℹ️ Verifica la versión más reciente en <span class="hl">mvnrepository.com → sqlite-jdbc</span></div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num green">C</div>
+      <div class="step-title">Con Hibernate ORM + SQLite Dialect</div>
+      <span class="step-tag tag-o">Avanzado</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">XML</span>
+        <pre><span class="ck">&lt;dependency&gt;</span>
+    <span class="cf">&lt;groupId&gt;</span><span class="cs">org.xerial</span><span class="cf">&lt;/groupId&gt;</span>
+    <span class="cf">&lt;artifactId&gt;</span><span class="cs">sqlite-jdbc</span><span class="cf">&lt;/artifactId&gt;</span>
+    <span class="cf">&lt;version&gt;</span><span class="cn">3.47.1.0</span><span class="cf">&lt;/version&gt;</span>
+<span class="ck">&lt;/dependency&gt;</span>
+<span class="ck">&lt;dependency&gt;</span>
+    <span class="cf">&lt;groupId&gt;</span><span class="cs">com.github.gwenn</span><span class="cf">&lt;/groupId&gt;</span>
+    <span class="cf">&lt;artifactId&gt;</span><span class="cs">sqlite-dialect</span><span class="cf">&lt;/artifactId&gt;</span>
+    <span class="cf">&lt;version&gt;</span><span class="cn">0.1.2</span><span class="cf">&lt;/version&gt;</span>
+<span class="ck">&lt;/dependency&gt;</span></pre>
+      </div>
+      <div class="pill-row">
+        <span class="pill pb">Hibernate 6.x compatible</span>
+        <span class="pill pg">jakarta.persistence</span>
+        <span class="pill pp">SQLiteDialect auto-detección</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CÓDIGO JAVA -->
+<div class="section" id="sec-code">
+  <div class="sec-title">Implementación Java — CRUD completo</div>
+
+  <div class="step-card open" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num purple">1</div>
+      <div class="step-title">DatabaseManager — Conexión y esquema</div>
+      <span class="step-tag tag-r">Requerido</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">JAVA</span>
+        <pre><span class="ck">import</span> java.sql.*;
+
+<span class="ck">public class</span> <span class="ct">DatabaseManager</span> {
+
+    <span class="ck">private static final</span> <span class="ct">String</span> DB_URL =
+        <span class="cs">"jdbc:sqlite:data/myapp.db"</span>;
+
+    <span class="ck">private static</span> <span class="ct">Connection</span> connection;
+
+    <span class="ck">public static</span> <span class="ct">Connection</span> <span class="cf">getConnection</span>()
+            <span class="ck">throws</span> <span class="ct">SQLException</span> {
+        <span class="ck">if</span> (connection == <span class="cv">null</span> || connection.isClosed()) {
+            connection = <span class="ct">DriverManager</span>.<span class="cf">getConnection</span>(DB_URL);
+        }
+        <span class="ck">return</span> connection;
+    }
+
+    <span class="ck">public static void</span> <span class="cf">initializeSchema</span>()
+            <span class="ck">throws</span> <span class="ct">SQLException</span> {
+        <span class="ct">String</span> sql = <span class="cs">"""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id      INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre  TEXT    NOT NULL,
+                email   TEXT    UNIQUE NOT NULL,
+                activo  INTEGER DEFAULT 1,
+                creado  TEXT    DEFAULT (datetime('now'))
+            )
+            """</span>;
+        <span class="ck">try</span> (<span class="ct">Connection</span> conn = <span class="cf">getConnection</span>();
+             <span class="ct">Statement</span> stmt = conn.<span class="cf">createStatement</span>()) {
+            stmt.<span class="cf">execute</span>(sql);
+        }
+    }
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num purple">2</div>
+      <div class="step-title">UsuarioDAO — Create, Read, Update, Delete</div>
+      <span class="step-tag tag-r">Requerido</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">JAVA</span>
+        <pre><span class="ck">import</span> java.sql.*;
+<span class="ck">import</span> java.util.*;
+
+<span class="ck">public class</span> <span class="ct">UsuarioDAO</span> {
+
+    <span class="cc">// CREATE</span>
+    <span class="ck">public void</span> <span class="cf">insertar</span>(<span class="ct">String</span> nombre, <span class="ct">String</span> email)
+            <span class="ck">throws</span> <span class="ct">SQLException</span> {
+        <span class="ct">String</span> sql = <span class="cs">"INSERT INTO usuarios (nombre, email) VALUES (?, ?)"</span>;
+        <span class="ck">try</span> (<span class="ct">Connection</span> conn = <span class="ct">DatabaseManager</span>.<span class="cf">getConnection</span>();
+             <span class="ct">PreparedStatement</span> ps = conn.<span class="cf">prepareStatement</span>(sql)) {
+            ps.<span class="cf">setString</span>(<span class="cn">1</span>, nombre);
+            ps.<span class="cf">setString</span>(<span class="cn">2</span>, email);
+            ps.<span class="cf">executeUpdate</span>();
+        }
+    }
+
+    <span class="cc">// READ ALL</span>
+    <span class="ck">public</span> <span class="ct">List</span>&lt;<span class="ct">String</span>[]&gt; <span class="cf">listar</span>() <span class="ck">throws</span> <span class="ct">SQLException</span> {
+        <span class="ct">List</span>&lt;<span class="ct">String</span>[]&gt; lista = <span class="ck">new</span> <span class="ct">ArrayList</span>&lt;&gt;();
+        <span class="ct">String</span> sql = <span class="cs">"SELECT id,nombre,email FROM usuarios WHERE activo=1"</span>;
+        <span class="ck">try</span> (<span class="ct">Connection</span> conn = <span class="ct">DatabaseManager</span>.<span class="cf">getConnection</span>();
+             <span class="ct">Statement</span> stmt = conn.<span class="cf">createStatement</span>();
+             <span class="ct">ResultSet</span> rs = stmt.<span class="cf">executeQuery</span>(sql)) {
+            <span class="ck">while</span> (rs.<span class="cf">next</span>()) {
+                lista.<span class="cf">add</span>(<span class="ck">new</span> <span class="ct">String</span>[]{
+                    rs.<span class="cf">getString</span>(<span class="cs">"id"</span>),
+                    rs.<span class="cf">getString</span>(<span class="cs">"nombre"</span>),
+                    rs.<span class="cf">getString</span>(<span class="cs">"email"</span>)
+                });
+            }
+        }
+        <span class="ck">return</span> lista;
+    }
+
+    <span class="cc">// UPDATE</span>
+    <span class="ck">public void</span> <span class="cf">actualizar</span>(<span class="ck">int</span> id, <span class="ct">String</span> nombre)
+            <span class="ck">throws</span> <span class="ct">SQLException</span> {
+        <span class="ct">String</span> sql = <span class="cs">"UPDATE usuarios SET nombre=? WHERE id=?"</span>;
+        <span class="ck">try</span> (<span class="ct">Connection</span> conn = <span class="ct">DatabaseManager</span>.<span class="cf">getConnection</span>();
+             <span class="ct">PreparedStatement</span> ps = conn.<span class="cf">prepareStatement</span>(sql)) {
+            ps.<span class="cf">setString</span>(<span class="cn">1</span>, nombre);
+            ps.<span class="cf">setInt</span>(<span class="cn">2</span>, id);
+            ps.<span class="cf">executeUpdate</span>();
+        }
+    }
+
+    <span class="cc">// DELETE (soft delete recomendado)</span>
+    <span class="ck">public void</span> <span class="cf">eliminar</span>(<span class="ck">int</span> id) <span class="ck">throws</span> <span class="ct">SQLException</span> {
+        <span class="ct">String</span> sql = <span class="cs">"UPDATE usuarios SET activo=0 WHERE id=?"</span>;
+        <span class="ck">try</span> (<span class="ct">Connection</span> conn = <span class="ct">DatabaseManager</span>.<span class="cf">getConnection</span>();
+             <span class="ct">PreparedStatement</span> ps = conn.<span class="cf">prepareStatement</span>(sql)) {
+            ps.<span class="cf">setInt</span>(<span class="cn">1</span>, id);
+            ps.<span class="cf">executeUpdate</span>();
+        }
+    }
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num purple">3</div>
+      <div class="step-title">Main — Punto de entrada</div>
+      <span class="step-tag tag-r">Requerido</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">JAVA</span>
+        <pre><span class="ck">public class</span> <span class="ct">Main</span> {
+    <span class="ck">public static void</span> <span class="cf">main</span>(<span class="ct">String</span>[] args) {
+        <span class="ck">try</span> {
+            <span class="cc">// 1. Crear tablas si no existen</span>
+            <span class="ct">DatabaseManager</span>.<span class="cf">initializeSchema</span>();
+
+            <span class="ct">UsuarioDAO</span> dao = <span class="ck">new</span> <span class="ct">UsuarioDAO</span>();
+
+            <span class="cc">// 2. Insertar</span>
+            dao.<span class="cf">insertar</span>(<span class="cs">"Ana López"</span>,    <span class="cs">"ana@ejemplo.cl"</span>);
+            dao.<span class="cf">insertar</span>(<span class="cs">"Carlos Ruiz"</span>, <span class="cs">"carlos@ejemplo.cl"</span>);
+
+            <span class="cc">// 3. Listar</span>
+            dao.<span class="cf">listar</span>().<span class="cf">forEach</span>(u ->
+                <span class="ct">System</span>.out.<span class="cf">printf</span>(<span class="cs">"[%s] %s — %s%n"</span>,
+                    u[<span class="cn">0</span>], u[<span class="cn">1</span>], u[<span class="cn">2</span>]));
+
+            <span class="cc">// 4. Actualizar</span>
+            dao.<span class="cf">actualizar</span>(<span class="cn">1</span>, <span class="cs">"Ana María López"</span>);
+
+            <span class="cc">// 5. Soft-delete</span>
+            dao.<span class="cf">eliminar</span>(<span class="cn">2</span>);
+
+        } <span class="ck">catch</span> (<span class="ct">Exception</span> e) {
+            e.<span class="cf">printStackTrace</span>();
+        }
+    }
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SQL EN IDE -->
+<div class="section" id="sec-sql">
+  <div class="sec-title">Herramientas SQL en IntelliJ IDEA</div>
+
+  <div class="step-card open" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num orange">🔍</div>
+      <div class="step-title">Query Console — SQL directo en el IDE</div>
+      <span class="step-tag tag-r">Muy útil</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Abre una consola SQL conectada a tu data source desde el Database Panel:</p>
+      <div class="flow-row">
+        <div class="flow-item">Click derecho en data source</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-item">Open Query Console</div>
+      </div>
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">SQL</span>
+        <pre><span class="cc">-- Consultar registros activos</span>
+<span class="ck">SELECT</span> id, nombre, email, creado
+<span class="ck">FROM</span>   usuarios
+<span class="ck">WHERE</span>  activo = <span class="cn">1</span>
+<span class="ck">ORDER BY</span> creado <span class="ck">DESC</span>
+<span class="ck">LIMIT</span>  <span class="cn">10</span>;</pre>
+      </div>
+      <div class="kbd-row">
+        <span style="font-size:13px;color:var(--text-muted)">Ejecutar selección:</span>
+        <kbd>Ctrl</kbd><span class="sep">+</span><kbd>Enter</kbd>
+        &nbsp;&nbsp;
+        <span style="font-size:13px;color:var(--text-muted)">Ejecutar script completo:</span>
+        <kbd>Ctrl</kbd><span class="sep">+</span><kbd>Shift</kbd><span class="sep">+</span><kbd>F10</kbd>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num orange">📊</div>
+      <div class="step-title">Data Editor — Vista tabular visual</div>
+      <span class="step-tag tag-o">Bonus</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Doble click en cualquier tabla del Database Tool Window para abrir el Data Editor:</p>
+      <div class="pill-row">
+        <span class="pill pb">Editar celdas inline</span>
+        <span class="pill pg">Filtrar con búsqueda</span>
+        <span class="pill pp">Exportar a CSV / JSON</span>
+        <span class="pill pb">Ordenar por columna</span>
+        <span class="pill pg">Agregar / borrar filas</span>
+      </div>
+      <div class="tip-box">💡 Los cambios en el Data Editor se aplican solo al hacer click en <span class="hl">Submit</span> (✓). Perfecto para exploración segura de datos.</div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num orange">🤖</div>
+      <div class="step-title">AI Assistant en Query Console (v26)</div>
+      <span class="step-tag tag-o">Nuevo en 2026</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">IntelliJ IDEA 2026 incluye el <span class="hl">AI Assistant</span> integrado que puede generar y explicar SQL:</p>
+      <div class="pill-row">
+        <span class="pill pp">Generar queries desde lenguaje natural</span>
+        <span class="pill pb">Explicar queries existentes</span>
+        <span class="pill pg">Sugerir índices y optimizaciones</span>
+      </div>
+      <div class="kbd-row">
+        <span style="font-size:13px;color:var(--text-muted)">Abrir AI en consola:</span>
+        <kbd>Alt</kbd><span class="sep">+</span><kbd>Enter</kbd>
+        <span style="font-size:13px;color:var(--text-muted)">→ Generate SQL</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BUENAS PRÁCTICAS -->
+<div class="section" id="sec-patterns">
+  <div class="sec-title">Buenas prácticas</div>
+
+  <div class="step-card open" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num yellow">🛡️</div>
+      <div class="step-title">Siempre usar PreparedStatement (anti SQL Injection)</div>
+      <span class="step-tag tag-r">Seguridad</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <span class="code-label">JAVA</span>
+        <pre><span class="cc">// ❌ NUNCA — vulnerable a SQL Injection</span>
+<span class="ct">String</span> sql = <span class="cs">"SELECT * FROM usuarios WHERE nombre = '"</span>
+           + nombre + <span class="cs">"'"</span>;
+
+<span class="cc">// ✅ SIEMPRE usar PreparedStatement</span>
+<span class="ct">String</span> sql = <span class="cs">"SELECT * FROM usuarios WHERE nombre = ?"</span>;
+<span class="ct">PreparedStatement</span> ps = conn.<span class="cf">prepareStatement</span>(sql);
+ps.<span class="cf">setString</span>(<span class="cn">1</span>, nombre);</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num yellow">⚡</div>
+      <div class="step-title">Transacciones para operaciones múltiples</div>
+      <span class="step-tag tag-r">Importante</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <button class="copy-btn" onclick="cp(this,event)">COPIAR</button>
+        <span class="code-label">JAVA</span>
+        <pre><span class="ck">public void</span> <span class="cf">operacionMultiple</span>() <span class="ck">throws</span> <span class="ct">SQLException</span> {
+    <span class="ct">Connection</span> conn = <span class="ct">DatabaseManager</span>.<span class="cf">getConnection</span>();
+    <span class="ck">try</span> {
+        conn.<span class="cf">setAutoCommit</span>(<span class="cv">false</span>); <span class="cc">// inicio transacción</span>
+
+        <span class="cc">// ... múltiples INSERT / UPDATE ...</span>
+
+        conn.<span class="cf">commit</span>(); <span class="cc">// confirmar todo</span>
+    } <span class="ck">catch</span> (<span class="ct">SQLException</span> e) {
+        conn.<span class="cf">rollback</span>(); <span class="cc">// revertir si falla alguno</span>
+        <span class="ck">throw</span> e;
+    } <span class="ck">finally</span> {
+        conn.<span class="cf">setAutoCommit</span>(<span class="cv">true</span>);
+    }
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-card" onclick="toggle(this)">
+    <div class="step-header">
+      <div class="step-num yellow">📁</div>
+      <div class="step-title">Estructura de proyecto recomendada</div>
+      <span class="step-tag tag-o">Referencia</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <span class="code-label">ÁRBOL</span>
+        <pre><span class="cv">mi-proyecto/</span>
+├── <span class="cf">data/</span>
+│   └── <span class="cs">myapp.db</span>          <span class="cc">← archivo SQLite</span>
+├── <span class="cf">src/main/java/</span>
+│   ├── <span class="ct">DatabaseManager.java</span>  <span class="cc">← conexión singleton</span>
+│   ├── <span class="ct">model/</span>
+│   │   └── <span class="ct">Usuario.java</span>      <span class="cc">← POJO / entidad</span>
+│   └── <span class="ct">dao/</span>
+│       └── <span class="ct">UsuarioDAO.java</span>   <span class="cc">← acceso a datos</span>
+└── <span class="cf">pom.xml</span></pre>
+      </div>
+      <div class="tip-box">📌 Agrega <span class="path">data/*.db</span> al <span class="path">.gitignore</span> si el archivo contiene datos de producción o sensibles.</div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+function toggle(card) {
+  card.classList.toggle('open');
+}
+function cp(btn, e) {
+  e.stopPropagation();
+  const pre = btn.parentElement.querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = '✓ COPIADO';
+    setTimeout(() => btn.textContent = 'COPIAR', 1800);
+  });
+}
+</script>
+</body>
+</html>
