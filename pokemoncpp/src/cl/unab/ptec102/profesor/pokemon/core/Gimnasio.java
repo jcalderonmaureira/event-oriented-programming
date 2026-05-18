@@ -4,10 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 public class Gimnasio {
@@ -19,7 +16,7 @@ public class Gimnasio {
         this.registroPokemones = new ArrayList<>();
         this.conectarDB();
         this.crearEsquema();
-        this.cargarRegistro();
+        //this.cargarRegistro(); se saca carga archivo CSV
     }
 
     public void conectarDB(){
@@ -89,7 +86,11 @@ public class Gimnasio {
         Pokemon nuevo = new Pokemon(id,nombre,hp);
         this.registroPokemones.add(nuevo);
         if(guardarRegistro){
-            this.guardarRegistro();
+            try {
+                this.insertarPokemonDB(id,nombre,hp);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -116,4 +117,36 @@ public class Gimnasio {
         e1.ataqueMasivo(pobre);
 
     }
+
+    // CREATE
+    public void insertarPokemonDB(int id, String nombre, int hp)
+            throws SQLException {
+        String sql = "INSERT INTO pokemones (id_pokedex, nombre, hp) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.setString(2, nombre);
+            ps.setInt(3, hp);
+            ps.executeUpdate();
+        }
+    }
+
+    /*// READ ALL
+    public List<String[]> listar() throws SQLException {
+        List<String[]> lista = new ArrayList<>();
+        String sql = "SELECT id,nombre,email FROM usuarios WHERE activo=1";
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                lista.add(new String[]{
+                        rs.getString("id"),
+                        rs.getString("nombre"),
+                        rs.getString("email")
+                });
+            }
+        }
+        return lista;
+    }
+    */
+
 }
