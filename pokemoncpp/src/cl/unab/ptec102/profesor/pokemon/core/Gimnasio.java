@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 
 public class Gimnasio {
@@ -17,15 +18,33 @@ public class Gimnasio {
     public Gimnasio() {
         this.registroPokemones = new ArrayList<>();
         this.conectarDB();
+        this.crearEsquema();
         this.cargarRegistro();
     }
 
     public void conectarDB(){
 
         try {
-            Connection conn = DriverManager.getConnection(
+            this.conn = DriverManager.getConnection(
                     "jdbc:sqlite:identifier.sqlite"
             );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void crearEsquema() {
+        String sql = """
+            CREATE TABLE IF NOT EXISTS pokemones (
+                id      INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_pokedex INTEGER NOT NULL,
+                nombre  TEXT    NOT NULL,
+                hp  TEXT        NOT NULL
+            )
+            """;
+        try {
+            Statement stmt = this.conn.createStatement();
+            stmt.execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
