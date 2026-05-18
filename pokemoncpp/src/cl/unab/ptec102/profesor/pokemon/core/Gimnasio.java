@@ -4,15 +4,31 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class Gimnasio {
 
     private ArrayList<Pokemon> registroPokemones;
+    private Connection conn;
 
     public Gimnasio() {
         this.registroPokemones = new ArrayList<>();
+        this.conectarDB();
         this.cargarRegistro();
+    }
+
+    public void conectarDB(){
+
+        try {
+            Connection conn = DriverManager.getConnection(
+                    "jdbc:sqlite:identifier.sqlite"
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void cargarRegistro(){
