@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Gimnasio {
 
@@ -16,7 +17,7 @@ public class Gimnasio {
         this.registroPokemones = new ArrayList<>();
         this.conectarDB();
         this.crearEsquema();
-        //this.cargarRegistro(); se saca carga archivo CSV
+        this.cargarRegistro(true); //se saca carga archivo CSV
     }
 
     public void conectarDB(){
@@ -47,20 +48,29 @@ public class Gimnasio {
         }
     }
 
-    public void cargarRegistro(){
+    public void cargarRegistro(boolean desdeDB){
 
         try {
-            BufferedReader reader = new BufferedReader(new FileReader("pokemones.csv"));
+            if(desdeDB){
 
-            String linea = reader.readLine();
-            while (linea != null) {
-                String[] datos = linea.split(",");
-                this.agregarPokemon(Integer.parseInt(datos[1]),datos[0],Integer.parseInt(datos[2]),false);
-                linea = reader.readLine();
+                List<String[]> pokemonesDB = this.listar();
+                for(String[] pokemonDB : pokemonesDB){
+                    this.agregarPokemon(Integer.parseInt(pokemonDB[0]), pokemonDB[1], Integer.parseInt(pokemonDB[2]), false);
+                }
             }
-            reader.close();
+            else {
+                BufferedReader reader = new BufferedReader(new FileReader("pokemones.csv"));
+
+                String linea = reader.readLine();
+                while (linea != null) {
+                    String[] datos = linea.split(",");
+                    this.agregarPokemon(Integer.parseInt(datos[1]), datos[0], Integer.parseInt(datos[2]), false);
+                    linea = reader.readLine();
+                }
+                reader.close();
+            }
         } catch (Exception e) {
-            IO.println("Archivo no encontrado");
+            IO.println(e.getMessage());
         }
 
     }
@@ -130,23 +140,20 @@ public class Gimnasio {
         }
     }
 
-    /*// READ ALL
     public List<String[]> listar() throws SQLException {
         List<String[]> lista = new ArrayList<>();
-        String sql = "SELECT id,nombre,email FROM usuarios WHERE activo=1";
-        try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
+        String sql = "SELECT id_pokedex,nombre,hp FROM pokemones";
+        try(Statement stmt = this.conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 lista.add(new String[]{
-                        rs.getString("id"),
+                        rs.getString("id_pokedex"),
                         rs.getString("nombre"),
-                        rs.getString("email")
+                        rs.getString("hp")
                 });
             }
         }
         return lista;
     }
-    */
 
 }
